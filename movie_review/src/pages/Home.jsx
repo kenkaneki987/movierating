@@ -1,78 +1,68 @@
-import MovieCard from "../components/MovieCard";
-import { useEffect, useState } from "react";
-import {searchMovies,getPopularMovies} from "../services/api";
-import "../css/Home.css"
-function Home() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [movies,setMovies] = useState([])
-  const [error,setError] = useState(null)
-  const [loading,setLoading] = useState(true)
+import Moviecard from "../components/moviecard";
+import { useState,useEffect } from "react";
+import { searchMovies,getPopularMovies } from "../services/api";
+import '../css/Home.css'
 
-  useEffect(()=>{
-    const loadPopularMovies = async()=>{
-        try {
-            const popularMovies = await getPopularMovies()
-            setMovies(popularMovies)
+function Home(){
+    const[searchQuery,setSearchQuery]=useState("");
+    const[movies,setMovies]=useState([]);
+    const[error,setError]=useState(null);
+    const[loading,setLoading]=useState(true);
 
-        } catch(err){ 
-            console.log(err)
-            setError("Failed to load Movies ... ")
-
+    useEffect(()=>{
+        const loadPopularMovies=async ()=>{
+            try{
+                const popularMovies= await getPopularMovies()
+                setMovies(popularMovies)
+            }catch(err){
+                console.log(err)
+                setError("Failed to load movies...")
+            }
+            finally {
+                setLoading(false)
+            }
         }
-        finally{
+        loadPopularMovies()
+    },[])
+
+    const HandleSearch=async (e)=>{
+        e.preventDefault();
+        if (!searchQuery.trim())return
+        if(loading)return
+
+        setLoading(true)
+        try{
+            const searchResults= await searchMovies(searchQuery)
+            setMovies(searchResults)
+            setError(null)
+        }catch(err){
+            console.log(err);
+            setError("Failed to search movies...")
+        }finally{
             setLoading(false)
         }
-
-
     }
-    loadPopularMovies()
-  },[])
+    return (<div className="home">
+        <form onSubmit={HandleSearch} className="search-form">
+            <input type="text" 
+            placeholder="Search for movies..." 
+            className="search-input"
+            value={searchQuery}
+            onChange={(e)=>setSearchQuery(e.target.value)}
+            />
+            <button type="submit" className="search-button">Search</button>
+        </form>
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return 
-    if (loading) return
-    setLoading(true)
-    try{
-        const searchResults = await searchMovies(searchQuery)
-        setMovies(searchResults)
-        setError(null)
-
-    }
-    catch(err){
-        console.log(err)
-        setError("Failed to load Movies ... ")
-
-    }
-    finally{
-        setLoading(false)
-
-    }
-  };
-  return (
-    <div className="home">
-      <form onSubmit={handleSearch} className="search-form">
-        <input
-          type="text"
-          placeholder="Search For Movies ..."
-          className="search-input"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <button type="submit" className="search-button">
-          Search
-        </button>
-      </form>
-      {error && <div className="error-message">{error}</div>}
-      {loading ? <div className="loading">Loading...</div> :       <div className="movies-grid">
-        {movies.map(
-          (movie) =>
-             (
-              <MovieCard key={movie.id} movie={movie} />
-            )
-        )}
-      </div>}
-    </div>
-  );
+        {error && <div className="error-message">{error}</div>}
+        {loading?(
+            <div className="loading">loading...</div>
+        ): (
+            <div className="movies-grid">
+            {movies.map((movie) => (
+            <Moviecard movie={movie} key={movie.id}/>
+            ))}
+            </div>
+        )} 
+    </div>)
 }
-export default Home;
+export default Home
